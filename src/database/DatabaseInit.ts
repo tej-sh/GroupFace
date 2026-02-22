@@ -27,9 +27,9 @@ export function createFaceTable( db:any ){
     db.transaction((txn:any)=>{
         txn.executeSql(
             `
-                CREATE TABLE IF NOT EXISTTS faces(
-                    id INTERGER PRIMARY KEY AUTOINCREMENT,
-                    photo_id INTEGER NOTNULL,
+                CREATE TABLE IF NOT EXISTS faces(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    photo_id INTEGER NOT NULL,
                     bounding_box TEXT ,
                     embedding BLOB ,
                     group_id INTEGER,
