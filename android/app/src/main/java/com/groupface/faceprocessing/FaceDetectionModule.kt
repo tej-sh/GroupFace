@@ -7,10 +7,6 @@ import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
 
-/**
- * Handles face detection using ML Kit
- * Returns bounding boxes for all detected faces in an image
- */
 class FaceDetectionModule {
     private val faceDetector: FaceDetector
     private val TAG = "FaceDetectionModule"
@@ -25,11 +21,6 @@ class FaceDetectionModule {
         faceDetector = FaceDetection.getClient(options)
     }
 
-    /**
-     * Detect all faces in a bitmap
-     * @param bitmap Input image
-     * @return List of bounding boxes
-     */
     fun detectFaces(bitmap: Bitmap): List<BoundingBox> {
         return try {
             val image = InputImage.fromBitmap(bitmap)
@@ -51,9 +42,6 @@ class FaceDetectionModule {
         }
     }
 
-    /**
-     * Close the detector resources
-     */
     fun release() {
         try {
             faceDetector.close()

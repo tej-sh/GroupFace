@@ -4,9 +4,6 @@ import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
 
-/**
- * Represents the bounding box of a detected face
- */
 data class BoundingBox(
     val left: Float,
     val top: Float,
@@ -21,9 +18,6 @@ data class BoundingBox(
     }
 }
 
-/**
- * Face embedding vector and associated metadata
- */
 data class FaceEmbedding(
     val vector: FloatArray,
     val confidence: Float = 0.95f
@@ -44,24 +38,18 @@ data class FaceEmbedding(
     }
 }
 
-/**
- * Complete face data: bounding box, embedding, and cluster assignment
- */
 data class FaceResult(
     val boundingBox: BoundingBox,
     val embedding: FloatArray,
-    val groupId: Int = -1 // -1 means noise/unclustered
+    val groupId: Int = -1
 ) {
     fun toWritableMap(): WritableMap = Arguments.createMap().apply {
         putMap("boundingBox", boundingBox.toWritableMap())
-        
-        // Convert embedding array to WritableArray
         val embeddingArray: WritableArray = Arguments.createArray()
         embedding.forEach { value ->
             embeddingArray.pushDouble(value.toDouble())
         }
         putArray("embedding", embeddingArray)
-        
         putInt("groupId", groupId)
     }
 
@@ -83,10 +71,7 @@ data class FaceResult(
     }
 }
 
-/**
- * Single cluster group from DBSCAN
- */
 data class ClusterGroup(
     val clusterId: Int,
-    val faceIndices: List<Int> // Indices into the original faces list
+    val faceIndices: List<Int>
 )
