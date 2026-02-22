@@ -3,6 +3,7 @@ package com.groupface.faceprocessing
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.ReactPackage
+import com.facebook.react.uimanager.ViewManager
 
 class FaceProcessingPackage : ReactPackage {
     override fun createNativeModules(
@@ -13,7 +14,7 @@ class FaceProcessingPackage : ReactPackage {
 
     override fun createViewManagers(
         reactContext: ReactApplicationContext
-    ): List<Any> {
+    ): List<ViewManager<*, *>> {
         return emptyList()
     }
 }

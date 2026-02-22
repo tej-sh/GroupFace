@@ -24,7 +24,8 @@ class FaceDetectionModule {
     fun detectFaces(bitmap: Bitmap): List<BoundingBox> {
         return try {
             val image = InputImage.fromBitmap(bitmap)
-            val detectedFaces = faceDetector.process(image).result
+            val task = faceDetector.process(image)
+            val detectedFaces = task.getResult()
 
             Log.d(TAG, "Detected ${detectedFaces.size} faces")
 
