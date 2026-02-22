@@ -56,7 +56,7 @@ data class FaceResult(
         putMap("boundingBox", boundingBox.toWritableMap())
         
         // Convert embedding array to WritableArray
-        val embeddingArray = WritableArray()
+        val embeddingArray: WritableArray = Arguments.createArray()
         embedding.forEach { value ->
             embeddingArray.pushDouble(value.toDouble())
         }
