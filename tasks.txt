@@ -1,0 +1,72 @@
+Here's your remaining task list — everything you need to write yourself on the React Native/TypeScript side:
+
+Your Remaining Tasks
+1. Extend the Database Schema
+In your 
+
+DatabaseInit.ts
+, add a groups table:
+
+sql
+CREATE TABLE IF NOT EXISTS groups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  label TEXT,
+  email TEXT,
+  reference_embedding TEXT  -- store as JSON string
+)
+Add a group_id column to your faces table too if you haven't yet.
+
+2. Save Face Results to DB
+After 
+
+sendImageToKotlin(uri)
+ returns, for each face in results:
+
+Insert into faces table: photo_id, bounding_box (JSON.stringify), embedding (JSON.stringify), group_id
+3. Write the Cosine Similarity Function
+ts
+function cosineSimilarity(a: number[], b: number[]): number
+Compare two 192-dim embedding arrays. Returns a number between 0–1.
+
+4. Write the Incremental Matching Logic
+This is the core algorithm — call it after you get face results:
+
+Load all saved reference_embedding from groups table
+For each face embedding → compare with all saved references using cosine similarity
+If similarity > 0.75 → assign that group_id
+If no match → create a new group, save the embedding as reference
+5. Multi-photo Support
+In your 
+
+photoPicker()
+, change selectionLimit: 1 to selectionLimit: 0 (unlimited picks), and return string[] instead of string | null. Loop through each URI and process one by one.
+
+6. Groups UI Screen
+A screen that reads from your groups table and shows:
+
+Group ID / label (person thumbnail if you store crop)
+Text input for email
+Save button per group
+7. Email Sharing
+For each group with an email assigned:
+
+ts
+import { Linking } from 'react-native'
+// Get all photo URIs for that group from DB, share via mailto
+Linking.openURL(`mailto:${email}?subject=Photos&body=Here are your photos`)
+For actual photo attachments use react-native-mail (already planned).
+
+Summary Order
+DatabaseInit.ts  → add groups table + group_id to faces
+photosDb.ts      → multi-photo picker (returns string[])
+new facesDb.ts   → insertFace(), getFacesByGroup()
+new groupsDb.ts  → insertGroup(), getAllGroups(), updateGroupEmail()
+FaceProcessing.ts → cosineSimilarity() + incremental matching logic
+App.tsx          → wire picker → process → match → save
+Groups screen    → show groups, email input
+Share screen     → mailto per group
+The Kotlin side is done — 
+
+processImage()
+ returns bounding boxes + 192-dim embeddings and that's all you need from it.
+

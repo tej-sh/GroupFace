@@ -2,7 +2,7 @@ import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { openDb } from './src/database/DatabaseInit';
-import { createPhotosTable } from './src/database/DatabaseInit';
+import { createPhotosTable, createGroupsTable, createFaceTable } from './src/database/DatabaseInit';
 // import { checkPhotos } from './src/database/CheckDb';
 import { displayAllTables } from './src/database/CheckDb';
 import { insertInPhotos } from './src/database/photosDb';
@@ -11,7 +11,8 @@ import { useEffect } from 'react';
 import { photoPicker } from './src/database/photosDb';
 import { getEmbeddingsAndBoundingBox } from './src/ml/FaceProcessing';
 import { cleanEntireDatabase } from './src/database/CleanDb';
-import { createFaceTable } from './src/database/DatabaseInit';
+
+
 const db = openDb()
 
 function App() {
@@ -32,19 +33,22 @@ function AppContent() {
   const databaseTables = () => {
     createPhotosTable(db)
     createFaceTable(db)
+    createGroupsTable(db)
     setStatus("created database")
   }
 
   const addPhotos = async () => {
-    const uri = await photoPicker()
-    if (!uri) {
+    const uris = await photoPicker(db)
+    if (!uris || uris.length === 0) {
       setStatus("pick photo")
       return
     }
-    const photo_id = await insertInPhotos(db, uri)
-    if (!photo_id) return
-    getEmbeddingsAndBoundingBox(db, uri, photo_id)
-
+    for (const uri of uris) {
+      const photo_id = await insertInPhotos(db, uri)
+      if (!photo_id) return
+      await getEmbeddingsAndBoundingBox(db, uri, photo_id)
+    }
+    setStatus("finished processing images")
   }
 
 

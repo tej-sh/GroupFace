@@ -40,3 +40,21 @@ export function createFaceTable(db: any) {
         )
     })
 }
+
+export function createGroupsTable(db: any) {
+    db.transaction((txn: any) => {
+        txn.executeSql(
+            `
+                CREATE TABLE IF NOT EXISTS groups(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    label TEXT,
+                    email TEXT,
+                    reference_embedding TEXT
+                    )
+            `, [],
+            () => { console.log("created GROUPS table") },
+            (error: any) => { console.log("error while creating GROUPs tables :" + error) }
+        )
+    })
+}
+

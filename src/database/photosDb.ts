@@ -1,6 +1,6 @@
 import { launchImageLibrary } from "react-native-image-picker";
-
-export function insertInPhotos(db:any,uri:string): Promise<number | null>{
+import { getEmbeddingsAndBoundingBox } from "../ml/FaceProcessing";
+export async function insertInPhotos(db:any,uri:string): Promise<number | null>{
     return new Promise((resolve,reject)=>{
         db.transaction((txn:any)=>{
             txn.executeSql(
@@ -29,11 +29,11 @@ export function insertInPhotos(db:any,uri:string): Promise<number | null>{
     })
 }
 //cotton picker
-export async function photoPicker():Promise<string | null>{
+export async function photoPicker(db:any):Promise<string | null>{
     return new Promise((resolve)=>{
         const options:any ={
             mediaType : 'photo',
-            selectionLimit:1
+            selectionLimit:0
         }
         launchImageLibrary(options,(Response:any)=>{
             if(Response.didCancel){
@@ -46,8 +46,13 @@ export async function photoPicker():Promise<string | null>{
                 resolve(null)
                 return 
             }
-            const uri = Response.assets[0].uri ?? null
-            resolve(uri)
+            const uris = Response.assets.map((asset: any) => asset.uri);
+            console.log(uris)
+            resolve(uris)
+            
+            // const photo_id = await insertInPhotos(db, uri)
+            // if (!photo_id) return
+            // getEmbeddingsAndBoundingBox(db, uri, photo_id)
         })
     })
 }
