@@ -2,6 +2,7 @@ package com.groupface.faceprocessing
 
 import android.graphics.Bitmap
 import android.util.Log
+import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
@@ -23,9 +24,9 @@ class FaceDetectionModule {
 
     fun detectFaces(bitmap: Bitmap): List<BoundingBox> {
         return try {
-            val image = InputImage.fromBitmap(bitmap)
+            val image = InputImage.fromBitmap(bitmap, 0)
             val task = faceDetector.process(image)
-            val detectedFaces = task.getResult()
+            val detectedFaces = Tasks.await(task)  // properly waits for async ML Kit result
 
             Log.d(TAG, "Detected ${detectedFaces.size} faces")
 

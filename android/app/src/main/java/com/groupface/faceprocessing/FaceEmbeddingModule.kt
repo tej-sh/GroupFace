@@ -14,7 +14,7 @@ class FaceEmbeddingModule(private val context: Context) {
     private val TAG = "FaceEmbeddingModule"
     
     private val inputSize = 112
-    private val embeddingDim = 128
+    private val embeddingDim = 192
     private val modelName = "mobilefacenet.tflite"
 
     init {
