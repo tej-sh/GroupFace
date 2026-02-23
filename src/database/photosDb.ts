@@ -10,6 +10,7 @@ export function insertInPhotos(db:any,uri:string){
             [uri],
             (txn:any,res:any)=>{
                 console.log(` Inserted: ${uri}, ID: ${res.insertId}`);
+                return res.insertId
             },
             (txn:any,error:any)=>{
                 if (error.message.includes('UNIQUE constraint failed')) {

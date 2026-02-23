@@ -1,4 +1,3 @@
-import { TextInput } from 'react-native'
 import SQLite from 'react-native-sqlite-2'
 
 export function openDb() {

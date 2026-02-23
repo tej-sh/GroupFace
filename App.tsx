@@ -3,13 +3,14 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { useState } from 'react';
 import { openDb } from './src/database/DatabaseInit';
 import { createPhotosTable } from './src/database/DatabaseInit';
-import { checkPhotos } from './src/database/CheckDb';
+// import { checkPhotos } from './src/database/CheckDb';
+import { displayAllTables } from './src/database/CheckDb';
 import { insertInPhotos } from './src/database/photosDb';
-import { cleanPhotosTable } from './src/database/CleanDb';
 import { Button, Text } from 'react-native';
 import { useEffect } from 'react';
 import { photoPicker } from './src/database/photosDb';
 import { getEmbeddingsAndBoundingBox } from './src/ml/FaceProcessing';
+import { cleanEntireDatabase } from './src/database/CleanDb';
 
 const db = openDb()
 
@@ -46,11 +47,12 @@ function AppContent() {
 
 
   const displayDataBase = () => {
-    checkPhotos(db)
+    displayAllTables(db)
+    
     setStatus("check console of database")
   }
   const cleanDataBase = () => {
-    cleanPhotosTable(db)
+    cleanEntireDatabase(db)
     setStatus("database is cleaned")
   }
 

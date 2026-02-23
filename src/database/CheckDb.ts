@@ -17,3 +17,35 @@ export function checkPhotos( db:any ){
         )
     })
 }
+export function checkFaces( db:any ){
+    db.transaction((txn:any)=>{
+        txn.executeSql(
+            `
+                SELECT * FROM faces
+            `,
+            [],
+            (txn:any,res:any)=>{
+                const row = []
+                console.log("displaying faces")
+                console.log("faces:",res.rows._array)
+            },
+            (error:any)=>{
+                console.log("error while displaying faces table")
+                console.log(error)
+            }
+        )
+    })
+}
+
+export function displayAllTables(db:any){
+    try{
+        checkPhotos(db)
+        checkFaces(db)
+        console.log("displayed both tables")
+    }
+    catch(error:any){
+        console.log("error while displaying tables")
+        console.log(error)
+    }
+    
+}

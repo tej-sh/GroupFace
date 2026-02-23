@@ -3,15 +3,12 @@ import RNFS from 'react-native-fs'
 
 const { FaceProcessing } = NativeModules;
 
-export async function sendImageToKotlin(uri: any) {
+export async function getEmbeddingsAndBoundingBox(db:any ,uri: any) {
   // Strip "file://" prefix before passing to RNFS
   const path = uri.startsWith('file://') ? uri.slice(7) : uri;
   const base64 = await RNFS.readFile(path, 'base64');
   const results = await NativeModules.FaceProcessingModule.processImage(base64)
-  console.log(results)
-  console.log(results[1]["boundingBox"])
-  // console.log(results[2]["embedding"])
-  console.log(results["boundingBox"])
+  
   return results
 }
 
