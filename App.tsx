@@ -1,4 +1,4 @@
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+import { StatusBar, StyleSheet, useColorScheme, View, Text } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { openDb } from './src/database/DatabaseInit';
@@ -6,7 +6,7 @@ import { createPhotosTable, createGroupsTable, createFaceTable } from './src/dat
 // import { checkPhotos } from './src/database/CheckDb';
 import { displayAllTables } from './src/database/CheckDb';
 import { insertInPhotos } from './src/database/photosDb';
-import { Button, Text } from 'react-native';
+import { Button } from 'react-native';
 import { useEffect } from 'react';
 import { photoPicker } from './src/database/photosDb';
 import { getEmbeddingsAndBoundingBox } from './src/ml/FaceProcessing';
@@ -20,6 +20,16 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' }}>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: 'blue' }}>
+          Inline Styles Work
+        </Text>
+        <View className="mt-4">
+          <Text className="text-lg text-red-500">
+            Nativewind Classes Should Show Red
+          </Text>
+        </View>
+      </View>
       <AppContent />
     </SafeAreaProvider>
   );
