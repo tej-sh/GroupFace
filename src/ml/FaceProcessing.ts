@@ -1,15 +1,19 @@
 import { NativeModules } from "react-native";
 import RNFS from 'react-native-fs'
+import { insertFaces } from "../database/FacesDb";
 
 const { FaceProcessing } = NativeModules;
-
-export async function getEmbeddingsAndBoundingBox(db:any ,uri: any) {
-  // Strip "file://" prefix before passing to RNFS
+export async function getEmbeddingsAndBoundingBox(db: any, uri: any, photo_id: number) {
   const path = uri.startsWith('file://') ? uri.slice(7) : uri;
   const base64 = await RNFS.readFile(path, 'base64');
   const results = await NativeModules.FaceProcessingModule.processImage(base64)
-  
-  return results
+  for (let i = 0; i < results.length; i++) {
+    const bounding_box = JSON.stringify(results[i]["boundingBox"])
+    const embedding = JSON.stringify(results[i]["embedding"])
+    const group_id = results[i]["groupId"]
+
+    insertFaces(db, photo_id, bounding_box, embedding, group_id)
+  }
 }
 
 

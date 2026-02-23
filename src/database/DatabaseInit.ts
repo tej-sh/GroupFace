@@ -32,7 +32,7 @@ export function createFaceTable(db: any) {
                     bounding_box TEXT ,
                     embedding BLOB ,
                     group_id INTEGER,
-                    FOREIGN KEY(photo_id) REFERENCES photo(id)
+                    FOREIGN KEY(photo_id) REFERENCES photos(id)
                 )
             `, [],
             () => { console.log("created face table") },

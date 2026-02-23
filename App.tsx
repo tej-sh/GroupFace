@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 import { photoPicker } from './src/database/photosDb';
 import { getEmbeddingsAndBoundingBox } from './src/ml/FaceProcessing';
 import { cleanEntireDatabase } from './src/database/CleanDb';
-
+import { createFaceTable } from './src/database/DatabaseInit';
 const db = openDb()
 
 function App() {
@@ -31,6 +31,7 @@ function AppContent() {
   const safeAreaInsets = useSafeAreaInsets();
   const databaseTables = () => {
     createPhotosTable(db)
+    createFaceTable(db)
     setStatus("created database")
   }
 
@@ -40,15 +41,16 @@ function AppContent() {
       setStatus("pick photo")
       return
     }
-    insertInPhotos(db, uri)
-    getEmbeddingsAndBoundingBox(db, uri)
+    const photo_id = await insertInPhotos(db, uri)
+    if (!photo_id) return
+    getEmbeddingsAndBoundingBox(db, uri, photo_id)
 
   }
 
 
   const displayDataBase = () => {
     displayAllTables(db)
-    
+
     setStatus("check console of database")
   }
   const cleanDataBase = () => {

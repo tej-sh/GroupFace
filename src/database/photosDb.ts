@@ -1,28 +1,31 @@
 import { launchImageLibrary } from "react-native-image-picker";
 
-export function insertInPhotos(db:any,uri:string){
-    db.transaction((txn:any)=>{
-        txn.executeSql(
-            `
-                INSERT INTO photos(uri)
-                VALUES(?)
-            `,
-            [uri],
-            (txn:any,res:any)=>{
-                console.log(` Inserted: ${uri}, ID: ${res.insertId}`);
-                return res.insertId
-            },
-            (txn:any,error:any)=>{
-                if (error.message.includes('UNIQUE constraint failed')) {
-                    console.log(` Duplicate skipped: ${uri}`);
-                    return false; 
+export function insertInPhotos(db:any,uri:string): Promise<number | null>{
+    return new Promise((resolve,reject)=>{
+        db.transaction((txn:any)=>{
+            txn.executeSql(
+                `
+                    INSERT INTO photos(uri)
+                    VALUES(?)
+                `,
+                [uri],
+                (txn:any,res:any)=>{
+                    console.log(` Inserted: ${uri}, ID: ${res.insertId}`);
+                    resolve(res.insertId)   
+                },
+                (txn:any,error:any)=>{
+                    if (error.message.includes('UNIQUE constraint failed')) {
+                        console.log(` Duplicate skipped: ${uri}`);
+                        resolve(null)     
+                    }
+                    else{
+                        console.log(error)
+                        reject(error)     
+                    }
+                    return true
                 }
-                else{
-                    console.log(error)
-                    return false
-                }
-            }
-        )
+            )
+        })
     })
 }
 //cotton picker
