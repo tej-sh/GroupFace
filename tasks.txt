@@ -70,3 +70,69 @@ The Kotlin side is done —
 processImage()
  returns bounding boxes + 192-dim embeddings and that's all you need from it.
 
+
+#2a2a2a
+#5e5e5e
+#272625
+#131313     
+
+
+
+// for face thumbnails 
+ // Original image dimensions
+//     const originalWidth = 500;
+//     const originalHeight = 748;
+
+//     // Hardcoded bounding box (example)
+//     const boundingBox = {"height":79,"top":313,"width":59,"left":167};
+
+//     // Padding around the bounding box (to avoid over-zoom)
+//    // Horizontal padding for left/right
+//     const horizontalPadding = 0.2; // 20% extra
+//     // Vertical padding for top/bottom (more to include hair)
+//     const verticalPadding = 0.4; // 40% extra to show hair
+
+//     const paddedWidth = boundingBox.width * (1 + horizontalPadding);
+//     const paddedHeight = boundingBox.height * (1 + verticalPadding);
+
+
+//     // Container size
+//     const containerWidth = 160;
+//     const containerHeight = 140;
+
+//     // Zoom scale based on padded width
+//     const scaleX = containerWidth / paddedWidth;
+//     const scaleY = containerHeight / paddedHeight;
+//     const zoomScale = Math.min(scaleX, scaleY);
+
+//     // Face center
+//     const faceCenterX = boundingBox.left + boundingBox.width / 2;
+//     const faceCenterY = boundingBox.top + boundingBox.height / 2;
+
+//     // Translate so face is centered in the container
+//     const translateX = -faceCenterX * zoomScale + containerWidth / 2;
+//     const translateY = -faceCenterY * zoomScale + containerHeight / 2;
+
+//  <View
+                        // style={{
+                            // width: containerWidth,
+                            // height: containerHeight,
+                            // overflow: 'hidden',
+                            // borderRadius: 16,
+                        // }}
+                    // ></View>
+{/* <Image
+                            source={require('../assets/images/groupPhoto.jpg')}
+                            style={{
+                                width: originalWidth * zoomScale,
+                                height: originalHeight * zoomScale,
+                                transform: [{ translateX }, { translateY }],
+                            }}
+                            resizeMode="cover"
+                        /> */}
+short cuts 
+
+
+
+bash -c 'if wmctrl -l | grep -iq "WhatsApp Web"; then wmctrl -a "WhatsApp Web"; else flatpak run com.brave.Browser --profile-directory=Default --app-id=hnpfjngllnobngcgfapefoaidbinmjnm; fi'
+bash -c 'if wmctrl -l | grep -iq "YouTube"; then wmctrl -a "YouTube"; else flatpak run com.brave.Browser --profile-directory=Default --app-id=agimnkijcaahngcdmfeangaknmldooml; fi'

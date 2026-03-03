@@ -4,6 +4,11 @@ const { withNativeWind } = require("nativewind/metro");
 const config = mergeConfig(getDefaultConfig(__dirname), {
   transformer: {
     unstable_allowRequireContext: true,
+    babelTransformerPath: require.resolve('react-native-svg-transformer'),
+  },
+  resolver: {
+    assetExts: getDefaultConfig(__dirname).resolver.assetExts.filter(ext => ext !== 'svg'),
+    sourceExts: [...getDefaultConfig(__dirname).resolver.sourceExts, 'svg'],
   },
 });
 

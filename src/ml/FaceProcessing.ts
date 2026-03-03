@@ -1,70 +1,167 @@
 import { NativeModules } from "react-native";
 import RNFS from "react-native-fs";
-import { insertFaces } from "../database/FacesDb";
+import { insertFaces, getFaceDataByGroupId } from "../database/FacesDb";
 import { getAllGroups, insertGroup } from "../database/groupsDb";
+import { getThreshold } from "../settings";
 
-export async function getEmbeddingsAndBoundingBox(db: any, uri: any, photo_id: number) {
-  const path = uri.startsWith("file://") ? uri.slice(7) : uri;
-  const base64 = await RNFS.readFile(path, "base64");
-  const results = await NativeModules.FaceProcessingModule.processImage(base64);
+function normalize(vec: number[]) {
+  const norm = Math.sqrt(vec.reduce((sum, v) => sum + v * v, 0));
+  return vec.map(v => v / norm);
+}
+//this to sesnd to native module ->embedding and bounding boc 
+export async function extractFacesFromImage(uri: string) {
+  let path: string;
+  let tmpPath: string | null = null;
 
-  // If no faces found, just return
-  if (!results || results.length === 0) return;
+  if (uri.startsWith("content://")) {
+    // content:// URIs can't be read directly by the native module — copy to a temp file first
+    tmpPath = `${RNFS.TemporaryDirectoryPath}/face_tmp_${Date.now()}.jpg`;
+    await RNFS.copyFile(uri, tmpPath);
+    path = tmpPath;
+  } else {
+    path = uri.startsWith("file://") ? uri.slice(7) : uri;
+  }
 
-  // 1. Load all existing groups and their references
-  const existingGroups = await getAllGroups(db);
-
-  for (let i = 0; i < results.length; i++) {
-    const rawEmbedding: number[] = results[i]["embedding"]; // array of floats
-    const stringifiedEmbedding = JSON.stringify(rawEmbedding);
-    const boundingBox = JSON.stringify(results[i]["boundingBox"]);
-
-    // 2. Incremental Matching: Compare current face against existing groups
-    let bestMatchGroupId: number | null = null;
-    let highestScore = 0;
-
-    for (const group of existingGroups) {
-      if (group.reference_embedding) {
-        const refEmbedding: number[] = JSON.parse(group.reference_embedding);
-        const score = cosineSimilarity(rawEmbedding, refEmbedding);
-
-        if (score > highestScore) {
-          highestScore = score;
-        }
-
-        // Using 0.75 as the threshold for MobileFaceNet
-        if (score > 0.75 && highestScore === score) {
-          bestMatchGroupId = group.id;
-        }
-      }
+  console.log("[FaceProcessing] extractFacesFromImage start:", path);
+  try {
+    const results = await NativeModules.FaceProcessingModule.processImageFromUri(path);
+    console.log("[FaceProcessing] native result count:", results?.length ?? 0);
+    if (!results || results.length === 0) {
+      console.log("[FaceProcessing] no faces detected for:", path);
+      return [];
     }
 
-    let finalGroupId: number;
-
-    // 3. The Decision
-    if (bestMatchGroupId !== null) {
-      // It's an existing person!
-      finalGroupId = bestMatchGroupId;
-      console.log(`Matched face against Group ${finalGroupId} (Score: ${highestScore.toFixed(3)})`);
-    } else {
-      // It's a new person!
-      console.log(`No match found (Highest score: ${highestScore.toFixed(3)}). Creating new group.`);
-      finalGroupId = await insertGroup(db, stringifiedEmbedding);
-
-      // Push the newly created group into the array so if there is another face 
-      // of the same new person in the very next photo (or same photo), it matches!
-      existingGroups.push({
-        id: finalGroupId,
-        label: null,
-        email: null,
-        reference_embedding: stringifiedEmbedding
-      });
+    return results.map((face: any) => ({
+      embedding: face.embedding,
+      boundingBox: {
+        ...face.boundingBox,
+        imageWidth: face.imageWidth,
+        imageHeight: face.imageHeight,
+      },
+      qualityScore: face.qualityScore ?? 0,
+    }));
+  } finally {
+    // Always clean up the temp file to avoid filling storage
+    if (tmpPath) {
+      RNFS.unlink(tmpPath).catch(() => {});
     }
-
-    // 4. Finally, save the face with the proper group ID
-    insertFaces(db, photo_id, boundingBox, stringifiedEmbedding, finalGroupId);
   }
 }
+
+/**
+ * Find best matching group by comparing against ALL face embeddings in each group.
+ * This is more robust than just comparing against a single reference embedding.
+ */
+export async function findBestMatchingGroup(db: any, embedding: number[], threshold: number = 0.60) {
+  const groups = await getAllGroups(db);
+  const normalizedInput = normalize(embedding);
+  
+  // Debug: check if input embedding looks valid
+  console.log(`[Match] Input embedding length: ${embedding.length}, first 3: [${embedding.slice(0,3).map(v => v.toFixed(4)).join(', ')}]`);
+  
+  let bestGroupId: number | null = null;
+  let highestScore = 0;
+
+  for (const group of groups) {
+    // Get all faces in this group
+
+    const facesInGroup = await getFaceDataByGroupId(db, group.id);
+    
+    
+    // Compare against all embeddings in the group, take the best match
+    let bestScoreInGroup = 0;
+    
+    for (const face of facesInGroup) {
+      if (!face.embedding) continue;
+      
+      const parsedEmbedding = JSON.parse(face.embedding);
+      console.log(`[Match] Face ${face.id} embedding length: ${parsedEmbedding.length}, first 3: [${parsedEmbedding.slice(0,3).map((v: number) => v.toFixed(4)).join(', ')}]`);
+      
+      const faceEmbedding = normalize(parsedEmbedding);
+      const score = cosineSimilarity(normalizedInput, faceEmbedding);
+      
+      if (score > bestScoreInGroup) {
+        bestScoreInGroup = score;
+      }
+    }
+    
+    // Also check against reference embedding (for backward compatibility)
+    if (group.reference_embedding) {
+      const parsedRef = JSON.parse(group.reference_embedding);
+      console.log(`[Match] Group ${group.id} ref embedding length: ${parsedRef.length}, first 3: [${parsedRef.slice(0,3).map((v: number) => v.toFixed(4)).join(', ')}]`);
+      
+      const reference = normalize(parsedRef);
+      const refScore = cosineSimilarity(normalizedInput, reference);
+      if (refScore > bestScoreInGroup) {
+        bestScoreInGroup = refScore;
+      }
+    }
+    
+    console.log(`Group ${group.id}: best score = ${bestScoreInGroup.toFixed(3)}`);
+
+    if (bestScoreInGroup > highestScore) {
+      highestScore = bestScoreInGroup;
+      bestGroupId = group.id;
+    }
+  }
+  
+  console.log(`Best matching group ID: ${bestGroupId} with score: ${highestScore.toFixed(3)}`);
+  
+  if (highestScore > threshold) {
+    return bestGroupId;
+  }
+
+  return null;
+}
+//new group and return group id
+export async function createNewGroup(db: any, embedding: number[]) {
+  const stringEmbedding = JSON.stringify(embedding);
+  return await insertGroup(db, stringEmbedding);
+}
+
+export async function saveFace(db: any, photo_id: number, boundingBox: any, embedding: number[], groupId: number, qualityScore: number = 0) {
+  await insertFaces(
+    db,
+    photo_id,
+    JSON.stringify(boundingBox),
+    JSON.stringify(embedding),
+    groupId,
+    qualityScore
+  );
+}
+
+
+export async function processPhoto(db: any, uri: string, photo_id: number) {
+    try {
+      console.log(`[FaceProcessing] processPhoto start: photo_id=${photo_id}, uri=${uri}`);
+      const embeddingsAndBoxes = await extractFacesFromImage(uri);
+      console.log(`[FaceProcessing] faces extracted for photo_id=${photo_id}: ${embeddingsAndBoxes.length}`);
+
+      for (const item of embeddingsAndBoxes){
+        const embedding = item.embedding;
+        const boundingBox = item.boundingBox;
+        const qualityScore = item.qualityScore ?? 0;
+        const threshold = await getThreshold();
+        let groupId = await findBestMatchingGroup(db, embedding, threshold);
+        if (groupId === null){
+          groupId = await createNewGroup(db, embedding);
+          console.log(`[FaceProcessing] created new group_id=${groupId} for photo_id=${photo_id}`);
+        }
+        await saveFace(db, photo_id, boundingBox, embedding, groupId, qualityScore)
+        console.log(`[FaceProcessing] saved face for photo_id=${photo_id}, group_id=${groupId}, quality=${qualityScore.toFixed(2)}`);
+      }
+
+      console.log(`[FaceProcessing] processPhoto done: photo_id=${photo_id}`);
+    } catch (error) {
+      console.log(`[FaceProcessing] processPhoto failed: photo_id=${photo_id}`);
+      console.log(error);
+      throw error;
+    }
+}
+
+
+
+
 
 export function cosineSimilarity(vecA: number[], vecB: number[]): number {
   if (vecA.length !== vecB.length) return 0;
